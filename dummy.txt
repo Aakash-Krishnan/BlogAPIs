@@ -1,0 +1,13 @@
+{
+  "firstName": "Aakash",
+  "lastName": "Krishnan",
+  "email": "aakash@gmail.com",
+  "password": "Aakash@123"
+}
+
+{
+  "firstName": "MrSky",
+  "lastName": "",
+  "email": "mrsky@gmail.com",
+  "password": "Mrsky@123"
+}
