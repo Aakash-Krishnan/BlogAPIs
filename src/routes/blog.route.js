@@ -8,8 +8,6 @@ router.get("/", controller.getAllBlogs);
 
 router.post("/new", controller.handleNewBlog);
 
-router.post("/:slug/new-reply", replyController.handleNewReply);
-
 router.get("/:slug", controller.getBlogBySlug);
 
 router.patch("/:slug", controller.updateBlogBySlug);

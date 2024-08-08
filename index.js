@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 
 const usersRouter = require("./src/routes/user.route");
 const blogsRouter = require("./src/routes/blog.route");
+const repliesRouter = require("./src/routes/reply.route");
 
 const app = express();
 const port = 8000;
@@ -35,6 +36,9 @@ app.use("/users", usersRouter);
 
 // NOTE: [Blogs | Replies] create, read, update and delete route.
 app.use("/blogs", blogsRouter);
+
+// NOTE: [Replies] create route.
+app.use("/replies", repliesRouter);
 
 app.listen(port, host, () => {
   console.log(`Server is running on http://${host}:${port}`);

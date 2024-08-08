@@ -11,10 +11,23 @@ const {
   replyValidatorSchema,
 } = require("../../utils/validators/reply.validator");
 
+exports.getAllReplies = async (_, res) => {
+  try {
+    const replies = await Reply.find({});
+
+    if (!replies) return res.status(404).json({ error: "Replies not found" });
+
+    return res.status(200).json({
+      message: "Replies found",
+      data: replies,
+    });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+};
+
 exports.handleNewReply = async (req, res) => {
   try {
-    const slugParam = req.params.slug;
-
     const replyValidatorResults = await replyValidatorSchema.safeParseAsync(
       req.body
     );
@@ -22,9 +35,9 @@ exports.handleNewReply = async (req, res) => {
     if (replyValidatorResults.error)
       return res.status(400).json({ error: replyValidatorResults.error });
 
-    const { userId, repliedTo, body } = replyValidatorResults.data;
+    const { userId, repliedTo, body, blogId } = replyValidatorResults.data;
 
-    const query = Blog.where({ slug: slugParam, isActive: true });
+    const query = Blog.where({ _id: blogId, isActive: true });
     const blog = await query.findOne();
     if (!blog) return res.status(404).json({ error: "Blog not found" });
 
@@ -94,5 +107,28 @@ exports.handleNewReply = async (req, res) => {
     }
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getAllRepliesBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const query = Blog.where({ slug });
+    const blog = await query.findOne();
+
+    if (!blog) return res.status(404).json({ error: "Blog not found" });
+
+    const blogReplies = await Reply.find({ blogId: blog._id });
+
+    if (!blogReplies)
+      return res.status(404).json({ error: "Replies not found" });
+
+    return res.status(200).json({
+      message: "Replies found",
+      data: blogReplies,
+    });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
   }
 };
