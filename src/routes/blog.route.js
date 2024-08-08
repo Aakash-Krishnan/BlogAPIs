@@ -1,12 +1,13 @@
 const express = require("express");
 const controller = require("../controllers/blog.controller");
-const replyController = require("../controllers/reply.controller");
+
+const { rateLimitMiddleWare } = require("../../utils/rateLimiter");
 
 const router = express.Router();
 
 router.get("/", controller.getAllBlogs);
 
-router.post("/new", controller.handleNewBlog);
+router.post("/new", rateLimitMiddleWare, controller.handleNewBlog);
 
 router.get("/:slug", controller.getBlogBySlug);
 

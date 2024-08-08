@@ -1,5 +1,6 @@
 const slugify = require("slugify");
 const Filter = require("bad-words");
+const crypto = require("crypto");
 
 const Blog = require("../models/blog.model");
 const User = require("../models/user.model");
@@ -45,11 +46,25 @@ exports.handleNewBlog = async (req, res) => {
 
   const slug = slugify(title, { lower: true });
 
+  let uniqueSlug = slug;
+  let isUnique = false;
+
+  while (!isUnique) {
+    const randomString = crypto.randomBytes(3).toString("hex"); // Generate a short random string
+    uniqueSlug = `${slug}-${randomString}`;
+
+    // Check if the slug is unique
+    const existingBlog = await Blog.findOne({ slug: uniqueSlug });
+    if (!existingBlog) {
+      isUnique = true;
+    }
+  }
+
   try {
     const blog = await Blog.create({
       title,
       body,
-      slug,
+      slug: uniqueSlug,
       authorId,
       views: 0,
       isActive: true,
