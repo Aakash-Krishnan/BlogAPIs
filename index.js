@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+require("dotenv").config();
 
 const usersRouter = require("./src/routes/user.route");
 const blogsRouter = require("./src/routes/blog.route");
@@ -8,9 +9,12 @@ const app = express();
 const port = 8000;
 const host = "localhost";
 
+const userId = process.env.USER_ID;
+const password = process.env.PASSWORD;
+
 mongoose
   .connect(
-    "mongodb+srv://mrskys156:5D2XNNeHyYp8MHA7@practicecluster.wszfg.mongodb.net/users?retryWrites=true&w=majority&appName=PracticeCluster"
+    `mongodb+srv://${userId}:${password}@practicecluster.wszfg.mongodb.net/users?retryWrites=true&w=majority&appName=PracticeCluster`
   )
   .then(() => {
     console.log("Connected to MongoDB");

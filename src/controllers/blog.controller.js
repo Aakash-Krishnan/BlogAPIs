@@ -125,6 +125,7 @@ exports.handleNewReply = async (req, res) => {
             viewCount: 1,
             replyCount: 1,
           });
+
           blog.views += 1;
           blog.replies += 1;
           await blog.save();
