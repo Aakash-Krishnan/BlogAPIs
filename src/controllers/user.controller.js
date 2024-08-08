@@ -7,13 +7,21 @@ const {
   userSignInValidatorSchema,
 } = require("../../utils/validators/user.validators");
 
-
-// TODO: Need to filter the fields in every user.
-exports.getAllUsers = async (req, res) => {
+//* To get all the users
+exports.getAllUsers = async (_, res) => {
   const users = await User.find({});
-  return res.json({ users });
+  const result = users.map((user) => {
+    return {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    };
+  });
+  return res.json({ users: result });
 };
 
+//* To handle user sign up.
 exports.handleUserSignUp = async (req, res) => {
   const validatorResults = await userSignUpValidatorSchema.safeParseAsync(
     req.body
@@ -50,6 +58,7 @@ exports.handleUserSignUp = async (req, res) => {
   }
 };
 
+//* To handle user sign in.
 exports.handleUserSignIn = async (req, res) => {
   const validatorResults = await userSignInValidatorSchema.safeParseAsync(
     req.body

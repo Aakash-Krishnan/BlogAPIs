@@ -1,5 +1,6 @@
 const express = require("express");
 const controller = require("../controllers/blog.controller");
+const replyController = require("../controllers/reply.controller");
 
 const router = express.Router();
 
@@ -7,7 +8,7 @@ router.get("/", controller.getAllBlogs);
 
 router.post("/new", controller.handleNewBlog);
 
-router.post("/:slug/new-reply", controller.handleNewReply);
+router.post("/:slug/new-reply", replyController.handleNewReply);
 
 router.get("/:slug", controller.getBlogBySlug);
 
