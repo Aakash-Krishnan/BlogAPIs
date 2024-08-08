@@ -5,11 +5,13 @@ const router = express.Router();
 
 router.get("/", controller.getAllBlogs);
 
-router.post("/new-blog", controller.handleNewBlog);
+router.post("/new", controller.handleNewBlog);
 
-router.post("/:slug", controller.getBlogBySlug);
+router.post("/:slug/new-reply", controller.handleNewReply);
 
-router.put("/:slug", controller.updateBlogBySlug);
+router.get("/:slug", controller.getBlogBySlug);
+
+router.patch("/:slug", controller.updateBlogBySlug);
 
 router.delete("/:slug", controller.deleteBlogBySlug);
 

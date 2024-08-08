@@ -28,6 +28,10 @@ const blogSchema = new Schema(
       type: Number,
       default: 0,
     },
+    replies: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

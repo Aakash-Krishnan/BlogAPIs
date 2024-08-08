@@ -11,3 +11,13 @@
   "email": "mrsky@gmail.com",
   "password": "Mrsky@123"
 }
+
+
+
+// BLOGS:
+
+{
+ "title": "First Blog",
+ "body": "Body of first blog",
+ "authorId": "66b33623cef9871c2c5b9632"
+}

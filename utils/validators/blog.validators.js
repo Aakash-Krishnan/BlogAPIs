@@ -10,4 +10,9 @@ const blogViewerValidator = z.object({
   viewerId: z.string(),
 });
 
-module.exports = { newBlogValidatorSchema, blogViewerValidator };
+const blogUpdaterValidator = z.object({
+  title: z.string().min(2).optional(),
+  body: z.string().min(2).optional(),
+});
+
+module.exports = { newBlogValidatorSchema, blogViewerValidator, blogUpdaterValidator };

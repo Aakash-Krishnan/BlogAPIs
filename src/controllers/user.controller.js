@@ -7,6 +7,8 @@ const {
   userSignInValidatorSchema,
 } = require("../../utils/validators/user.validators");
 
+
+// TODO: Need to filter the fields in every user.
 exports.getAllUsers = async (req, res) => {
   const users = await User.find({});
   return res.json({ users });
