@@ -3,7 +3,7 @@ const { z } = require("zod");
 const newBlogValidatorSchema = z.object({
   title: z.string().min(2),
   body: z.string().min(2),
-  authorId: z.string(),
+  // authorId: z.string(),
 });
 
 const blogViewerValidator = z.object({
@@ -15,4 +15,8 @@ const blogUpdaterValidator = z.object({
   body: z.string().min(2).optional(),
 });
 
-module.exports = { newBlogValidatorSchema, blogViewerValidator, blogUpdaterValidator };
+module.exports = {
+  newBlogValidatorSchema,
+  blogViewerValidator,
+  blogUpdaterValidator,
+};

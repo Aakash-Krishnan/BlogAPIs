@@ -6,6 +6,8 @@ const usersRouter = require("./src/routes/user.route");
 const blogsRouter = require("./src/routes/blog.route");
 const repliesRouter = require("./src/routes/reply.route");
 
+const { verifyAuth } = require("./src/middlewares/auth.middleware");
+
 const app = express();
 const port = 8000;
 const host = "localhost";
@@ -38,7 +40,7 @@ app.use("/users", usersRouter);
 app.use("/blogs", blogsRouter);
 
 // NOTE: [Replies] create route.
-app.use("/replies", repliesRouter);
+app.use("/replies", verifyAuth, repliesRouter);
 
 app.listen(port, host, () => {
   console.log(`Server is running on http://${host}:${port}`);

@@ -29,12 +29,12 @@ exports.handleNewBlog = async (req, res) => {
     req.body
   );
 
+  const user = req.user;
+
   if (blogValidatorResults.error)
     return res.status(400).json({ error: blogValidatorResults.error });
 
-  const { title, body, authorId } = blogValidatorResults.data;
-
-  const user = await User.find({ _id: authorId });
+  const { title, body } = blogValidatorResults.data;
 
   if (!user) return res.status(400).json({ error: "User not found" });
 
@@ -65,7 +65,7 @@ exports.handleNewBlog = async (req, res) => {
       title,
       body,
       slug: uniqueSlug,
-      authorId,
+      authorId: user._id,
       views: 0,
       isActive: true,
     });
@@ -83,18 +83,10 @@ exports.handleNewBlog = async (req, res) => {
   }
 };
 
-// viewerId: is the user's _id who is viewing the blog. Which need to be sent in the body.
 exports.getBlogBySlug = async (req, res) => {
   const slugParam = req.params.slug;
 
-  const blogValidatorResults = await blogViewerValidator.safeParseAsync(
-    req.body
-  );
-
-  if (blogValidatorResults.error)
-    return res.status(400).json({ error: blogValidatorResults.error });
-
-  const { viewerId } = blogValidatorResults.data;
+  const viewer = req.user;
 
   const blog = await Blog.findOne({ slug: slugParam, isActive: true });
 
@@ -102,10 +94,8 @@ exports.getBlogBySlug = async (req, res) => {
 
   const replies = await Reply.find({ blogId: blog._id });
 
-  if (String(blog.authorId) != viewerId) {
-    console.log("COUNTING");
-
-    const blogUserId = `${blog._id}_${viewerId}`;
+  if (String(blog.authorId) != String(viewer._id)) {
+    const blogUserId = `${blog._id}_${viewer._id}`;
 
     const query = ViewsRepliesCount.where({ blogUserId });
     const viewsRepliesCount = await query.findOne();
@@ -114,7 +104,7 @@ exports.getBlogBySlug = async (req, res) => {
       await ViewsRepliesCount.create({
         blogUserId,
         blogId: blog._id,
-        viewerId,
+        viewerId: viewer._id,
         viewCount: 1,
         replyCount: 0,
       });

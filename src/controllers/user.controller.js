@@ -2,6 +2,8 @@ const crypto = require("crypto");
 
 const User = require("../models/user.model");
 
+const { getToken } = require("../../utils/auth.lib");
+
 const {
   userSignUpValidatorSchema,
   userSignInValidatorSchema,
@@ -30,7 +32,7 @@ exports.handleUserSignUp = async (req, res) => {
   if (validatorResults.error)
     return res.status(400).json({ error: validatorResults.error });
 
-  const { firstName, lastName, email, password } = validatorResults.data;
+  const { firstName, lastName, email, password, role } = validatorResults.data;
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.createHmac("sha256", salt).update(password).digest("hex");
@@ -41,12 +43,15 @@ exports.handleUserSignUp = async (req, res) => {
       lastName,
       email,
       password: hash,
+      role: role ?? "user",
       salt,
     });
 
+    const token = getToken({ id: user._id, role: user.role ?? "user" });
+
     return res.status(201).json({
       message: "User created successfully",
-      data: { id: user._id, email: user.email },
+      data: { id: user._id, email: user.email, token },
     });
   } catch (err) {
     if (err.code === 11000) {
@@ -69,17 +74,22 @@ exports.handleUserSignIn = async (req, res) => {
 
   const { email, password } = validatorResults.data;
 
-  const userEmail = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
-  if (!userEmail) return res.status(404).json({ error: "Email not found" });
+  if (!user) return res.status(404).json({ error: "Email not found" });
 
   const hash = crypto
-    .createHmac("sha256", userEmail.salt)
+    .createHmac("sha256", user.salt)
     .update(password)
     .digest("hex");
 
-  if (hash !== userEmail.password)
+  if (hash !== user.password)
     return res.status(400).json({ error: "Incorrect password" });
 
-  return res.status(200).json({ message: "User signed in successfully" });
+  const token = getToken({ id: user._id, role: user.role ?? "user" });
+
+  return res.status(200).json({
+    message: "User signed in successfully",
+    data: { token, email: user.email },
+  });
 };

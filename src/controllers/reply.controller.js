@@ -32,17 +32,16 @@ exports.handleNewReply = async (req, res) => {
       req.body
     );
 
+    const user = req.user;
+
     if (replyValidatorResults.error)
       return res.status(400).json({ error: replyValidatorResults.error });
 
-    const { userId, repliedTo, body, blogId } = replyValidatorResults.data;
+    const { repliedTo, body, blogId } = replyValidatorResults.data;
 
     const query = Blog.where({ _id: blogId, isActive: true });
     const blog = await query.findOne();
     if (!blog) return res.status(404).json({ error: "Blog not found" });
-
-    const user = await User.findById({ _id: userId });
-    if (!user) return res.status(400).json({ error: "User not found" });
 
     if (repliedTo) {
       const repliedToExists = await Reply.findById({ _id: repliedTo });
@@ -60,13 +59,13 @@ exports.handleNewReply = async (req, res) => {
     try {
       const reply = await Reply.create({
         blogId: blog._id,
-        userId,
+        userId: user._id,
         repliedTo,
         body,
       });
 
-      if (String(blog.authorId) != userId) {
-        const blogUserId = `${blog._id}_${userId}`;
+      if (String(blog.authorId) != String(user._id)) {
+        const blogUserId = `${blog._id}_${user._id}`;
 
         const query = ViewsRepliesCount.where({ blogUserId });
         const viewsRepliesCount = await query.findOne();
@@ -75,7 +74,7 @@ exports.handleNewReply = async (req, res) => {
           await ViewsRepliesCount.create({
             blogUserId,
             blogId: blog._id,
-            viewerId: userId,
+            viewerId: user._id,
             viewCount: 1,
             replyCount: 1,
           });

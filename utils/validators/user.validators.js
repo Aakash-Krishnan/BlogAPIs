@@ -4,6 +4,7 @@ const userSignUpValidatorSchema = z.object({
   firstName: z.string().min(2).max(26),
   lastName: z.string().max(26).optional(),
   email: z.string().email(),
+  role: z.enum(["user", "admin"]).optional(),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
