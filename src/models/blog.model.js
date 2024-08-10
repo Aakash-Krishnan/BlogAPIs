@@ -15,6 +15,11 @@ const blogSchema = new Schema(
       required: true,
       unique: true,
     },
+    slugId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     authorId: {
       type: Schema.Types.ObjectId,
       ref: "user",

@@ -1,6 +1,5 @@
 const Filter = require("bad-words");
 
-const User = require("../models/user.model");
 const Blog = require("../models/blog.model");
 const Reply = require("../models/reply.model");
 const ViewsRepliesCount = require("../models/viewsRepliesCount.model");
@@ -112,18 +111,26 @@ exports.handleNewReply = async (req, res) => {
 exports.getAllRepliesBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
+    const slugId = slug.split("-").pop();
 
-    const query = Blog.where({ slug });
-    const blog = await query.findOne();
+    let blog = await Blog.findOne({ slug, isActive: true });
 
-    if (!blog) return res.status(404).json({ error: "Blog not found" });
+    if (!blog) {
+      blog = await Blog.findOne({ slugId, isActive: true });
+
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+
+      res.status(301, { Location: `/replies/${blog.slug}` });
+    }
 
     const blogReplies = await Reply.find({ blogId: blog._id });
 
     if (!blogReplies)
       return res.status(404).json({ error: "Replies not found" });
 
-    return res.status(200).json({
+    return res.json({
       message: "Replies found",
       data: blogReplies,
     });

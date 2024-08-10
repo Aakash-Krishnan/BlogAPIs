@@ -1,21 +1,14 @@
 const slugify = require("slugify");
 const Filter = require("bad-words");
-const crypto = require("crypto");
 
 const Blog = require("../models/blog.model");
-const User = require("../models/user.model");
 const Reply = require("../models/reply.model");
 const ViewsRepliesCount = require("../models/viewsRepliesCount.model");
 
 const {
   newBlogValidatorSchema,
-  blogViewerValidator,
   blogUpdaterValidator,
 } = require("../../utils/validators/blog.validators");
-
-const {
-  replyValidatorSchema,
-} = require("../../utils/validators/reply.validator");
 
 const filter = new Filter();
 
@@ -36,35 +29,23 @@ exports.handleNewBlog = async (req, res) => {
 
   const { title, body } = blogValidatorResults.data;
 
-  if (!user) return res.status(400).json({ error: "User not found" });
-
   if (filter.isProfane(title) || filter.isProfane(body))
     return res.status(400).json({
       error:
         "There are so much words, yet you choose profanity 😒. aura -100000",
     });
 
-  const slug = slugify(title, { lower: true });
-
-  let uniqueSlug = slug;
-  let isUnique = false;
-
-  while (!isUnique) {
-    const randomString = crypto.randomBytes(3).toString("hex"); // Generate a short random string
-    uniqueSlug = `${slug}-${randomString}`;
-
-    // Check if the slug is unique
-    const existingBlog = await Blog.findOne({ slug: uniqueSlug });
-    if (!existingBlog) {
-      isUnique = true;
-    }
-  }
+  const docCount = await Blog.estimatedDocumentCount();
+  const slug = `${slugify(title, {
+    lower: true,
+  })}-${docCount + 1}`;
 
   try {
     const blog = await Blog.create({
       title,
       body,
-      slug: uniqueSlug,
+      slug,
+      slugId: docCount + 1,
       authorId: user._id,
       views: 0,
       isActive: true,
@@ -85,12 +66,21 @@ exports.handleNewBlog = async (req, res) => {
 
 exports.getBlogBySlug = async (req, res) => {
   const slugParam = req.params.slug;
+  const slugId = slugParam.split("-").pop();
 
   const viewer = req.user;
 
-  const blog = await Blog.findOne({ slug: slugParam, isActive: true });
+  let blog = await Blog.findOne({ slug: slugParam, isActive: true });
 
-  if (!blog) return res.status(404).json({ error: "Blog not found" });
+  if (!blog) {
+    blog = await Blog.findOne({ slugId, isActive: true });
+
+    if (!blog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+
+    res.status(301, { Location: `/blog/${blog.slug}` });
+  }
 
   const replies = await Reply.find({ blogId: blog._id });
 
@@ -108,6 +98,7 @@ exports.getBlogBySlug = async (req, res) => {
         viewCount: 1,
         replyCount: 0,
       });
+
       blog.views += 1;
       await blog.save();
     } else if (viewsRepliesCount.viewCount >= 10) {
@@ -117,6 +108,7 @@ exports.getBlogBySlug = async (req, res) => {
     } else {
       blog.views += 1;
       viewsRepliesCount.viewCount += 1;
+
       await blog.save();
       await viewsRepliesCount.save();
     }
@@ -127,6 +119,7 @@ exports.getBlogBySlug = async (req, res) => {
 
 exports.updateBlogBySlug = async (req, res) => {
   const slugParam = req.params.slug;
+  const slugId = slugParam.split("-").pop();
 
   const blogValidatorResults = await blogUpdaterValidator.safeParseAsync(
     req.body
@@ -139,15 +132,21 @@ exports.updateBlogBySlug = async (req, res) => {
 
   try {
     const query = Blog.where({ slug: slugParam, isActive: true });
-    const blog = await query.findOne();
+    let blog = await query.findOne();
 
-    if (!blog) return res.status(404).json({ error: "Blog not found" });
+    if (!blog) {
+      blog = await Blog.find({ slugId });
+
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+    }
 
     if (title || body) {
       if (title) {
         blog.title = title;
 
-        const newSlug = slugify(title, { lower: true });
+        const newSlug = `${slugify(title, { lower: true })}-${slugId}`;
         blog.slug = newSlug;
       }
 
@@ -169,12 +168,19 @@ exports.updateBlogBySlug = async (req, res) => {
 
 exports.deleteBlogBySlug = async (req, res) => {
   const slugParam = req.params.slug;
+  const slugId = slugParam.split("-").pop();
 
   try {
     const query = Blog.where({ slug: slugParam, isActive: true });
-    const blog = await query.findOne();
+    let blog = await query.findOne();
 
-    if (!blog) return res.status(404).json({ error: "Blog not found" });
+    if (!blog) {
+      blog = await Blog.findOne({ slugId });
+
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+    }
 
     blog.isActive = false;
     await blog.save();
