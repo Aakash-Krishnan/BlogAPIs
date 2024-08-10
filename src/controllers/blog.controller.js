@@ -12,6 +12,25 @@ const {
 
 const filter = new Filter();
 
+exports.parseSlugAndBlog = async (req, res) => {
+  const slugParam = req.params.slug;
+  const slugId = slugParam.split("-").pop();
+
+  let blog = await Blog.findOne({ slug: slugParam, isActive: true });
+
+  if (!blog) {
+    blog = await Blog.findOne({ slugId, isActive: true });
+
+    if (!blog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+
+    res.status(301, { Location: `/blog/${blog.slug}` });
+  }
+
+  return blog;
+};
+
 exports.getAllBlogs = async (_, res) => {
   const blogs = await Blog.find({ isActive: true });
   return res.json({ blogs });
@@ -65,22 +84,8 @@ exports.handleNewBlog = async (req, res) => {
 };
 
 exports.getBlogBySlug = async (req, res) => {
-  const slugParam = req.params.slug;
-  const slugId = slugParam.split("-").pop();
-
   const viewer = req.user;
-
-  let blog = await Blog.findOne({ slug: slugParam, isActive: true });
-
-  if (!blog) {
-    blog = await Blog.findOne({ slugId, isActive: true });
-
-    if (!blog) {
-      return res.status(404).json({ error: "Blog not found" });
-    }
-
-    res.status(301, { Location: `/blog/${blog.slug}` });
-  }
+  const blog = req.blog;
 
   const replies = await Reply.find({ blogId: blog._id });
 
@@ -118,9 +123,6 @@ exports.getBlogBySlug = async (req, res) => {
 };
 
 exports.updateBlogBySlug = async (req, res) => {
-  const slugParam = req.params.slug;
-  const slugId = slugParam.split("-").pop();
-
   const blogValidatorResults = await blogUpdaterValidator.safeParseAsync(
     req.body
   );
@@ -131,16 +133,7 @@ exports.updateBlogBySlug = async (req, res) => {
   const { title, body } = blogValidatorResults.data;
 
   try {
-    const query = Blog.where({ slug: slugParam, isActive: true });
-    let blog = await query.findOne();
-
-    if (!blog) {
-      blog = await Blog.find({ slugId });
-
-      if (!blog) {
-        return res.status(404).json({ error: "Blog not found" });
-      }
-    }
+    const blog = req.blog;
 
     if (title || body) {
       if (title) {
@@ -167,19 +160,13 @@ exports.updateBlogBySlug = async (req, res) => {
 };
 
 exports.deleteBlogBySlug = async (req, res) => {
-  const slugParam = req.params.slug;
-  const slugId = slugParam.split("-").pop();
-
   try {
+    const slugParam = req.params.slug;
     const query = Blog.where({ slug: slugParam, isActive: true });
-    let blog = await query.findOne();
+    const blog = await query.findOne();
 
     if (!blog) {
-      blog = await Blog.findOne({ slugId });
-
-      if (!blog) {
-        return res.status(404).json({ error: "Blog not found" });
-      }
+      return res.status(404).json({ error: "Blog not found" });
     }
 
     blog.isActive = false;

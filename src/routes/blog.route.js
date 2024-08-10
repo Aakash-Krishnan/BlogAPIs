@@ -8,6 +8,10 @@ const {
   restrictToRole,
 } = require("../middlewares/auth.middleware");
 
+const {
+  parseSlugAndBlog,
+} = require("../middlewares/blogSlugParser.middleware");
+
 const router = express.Router();
 
 router.get("/", controller.getAllBlogs);
@@ -19,8 +23,8 @@ router.post("/new", rateLimitMiddleWare, controller.handleNewBlog);
 
 router
   .route("/:slug")
-  .get(controller.getBlogBySlug)
-  .patch(controller.updateBlogBySlug)
+  .get(parseSlugAndBlog, controller.getBlogBySlug)
+  .patch(parseSlugAndBlog, controller.updateBlogBySlug)
   .delete(controller.deleteBlogBySlug);
 
 module.exports = router;

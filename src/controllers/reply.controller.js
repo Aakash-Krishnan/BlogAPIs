@@ -111,18 +111,11 @@ exports.handleNewReply = async (req, res) => {
 exports.getAllRepliesBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
-    const slugId = slug.split("-").pop();
 
-    let blog = await Blog.findOne({ slug, isActive: true });
+    const blog = await Blog.findOne({ slug, isActive: true });
 
     if (!blog) {
-      blog = await Blog.findOne({ slugId, isActive: true });
-
-      if (!blog) {
-        return res.status(404).json({ error: "Blog not found" });
-      }
-
-      res.status(301, { Location: `/replies/${blog.slug}` });
+      return res.status(404).json({ error: "Blog not found" });
     }
 
     const blogReplies = await Reply.find({ blogId: blog._id });
@@ -135,6 +128,6 @@ exports.getAllRepliesBySlug = async (req, res) => {
       data: blogReplies,
     });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    return res.status(500).json({ message: "Internal server issue" });
   }
 };
